@@ -1,26 +1,12 @@
-LITTLE PRINCE NAME REVEAL — SERVER TRIAL (FIXED)
+Little Prince Name Reveal - 200 Participants
 
-This version fixes the previous "Please try again" problem.
-
-Important deployment structure:
-index.html
-package.json
-netlify.toml
-netlify/functions/reveal.js
-netlify/functions/reset.js
-
-Game logic:
-- 10 participants per round.
-- Participants 1–5 and 7–10 receive unique randomly shuffled names from the 9 ordinary names.
-- Participant 6 always receives Shrinivasprasad.
-- No names are shown during the reveal animation.
-- The participant's browser receives a persistent anonymous cookie, so returning to the same browser gets the same assignment during that round.
-- Admin reset starts a new round.
-
-IMPORTANT:
-Deploy from the GitHub repository containing the files above. Do not upload index.html alone.
-The frontend calls the Netlify Functions directly at:
-  /.netlify/functions/reveal
-  /.netlify/functions/reset
-
-Admin password: trial123
+Features:
+- 200 participant positions per round.
+- 200-name pool; each pool name is used once per round when no custom name is introduced.
+- Admin can choose a special name and any position 1-200.
+- Name matching is case-insensitive. For example, entering "AARUSH", "Aarush", or "aarush" matches the pool name "Aarush" and moves that canonical pool name to the selected position.
+- If the chosen name is in the pool, it is removed from its random position and placed at the admin-selected position, so it cannot appear elsewhere.
+- If the chosen name is not in the pool, it is used at the selected position and 199 of the 200 pool names fill the other positions.
+- Saving the admin name + position starts a completely new round immediately, exactly like Reset Game: participant counter returns to #1 and all prior participant assignments are cleared.
+- Reset Game also starts a completely new round while retaining the current special name and position.
+- Admin is password protected with password: lilprince. Server-side endpoints also require the password.

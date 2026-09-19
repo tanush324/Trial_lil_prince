@@ -58,7 +58,7 @@ input{width:100%;padding:14px;border:1px solid #d7c0a8;border-radius:14px;font-s
 <section id="welcome" class="screen">
   <div class="card">
     <div class="crown">👑</div>
-    <h1>Welcome to our little prince's<br>Name Revealing Ceremony</h1>
+    <h1>Welcome to our prince's<br>Name Revealing Ceremony</h1>
     <div class="sparkles">✦ ✧ ✦</div>
     <div class="subtitle">✨ A beautiful name is waiting to be revealed soon.</div>
     <div class="subtitle">🎁 Could you be the lucky person chosen today?</div>
@@ -87,9 +87,17 @@ input{width:100%;padding:14px;border:1px solid #d7c0a8;border-radius:14px;font-s
   <div class="card">
     <div class="crown">🔐</div>
     <h1>Admin</h1>
-    <p class="small">Trial reset controls</p>
+    <p class="small">Admin controls</p>
     <input id="password" type="password" placeholder="Admin password">
-    <button onclick="resetGame()">Reset Game</button>
+    <button onclick="unlockAdmin()">Unlock Admin</button>
+    <div id="adminControls" class="hidden">
+      <p class="small">Choose the special name and the participant position for this round. The game has 200 participant positions. If your chosen name is in the 200-name pool, it is moved to the selected position so it cannot appear elsewhere in the same round.</p>
+      <input id="specialName" type="text" placeholder="Special name (e.g. Shrinivasprasad)" maxlength="50">
+      <input id="specialPosition" type="number" min="1" max="200" placeholder="Position (1–200)">
+      <button onclick="saveSpecial()">Save Name &amp; Position</button>
+      <br><br>
+      <button onclick="resetGame()">Reset Game</button>
+    </div>
     <div id="adminMsg" class="msg"></div>
     <br><br><a href="#" class="small" onclick="showWelcome();return false;">← Back</a>
   </div>
@@ -98,7 +106,6 @@ input{width:100%;padding:14px;border:1px solid #d7c0a8;border-radius:14px;font-s
 <a class="admin-link" href="#" onclick="showAdmin();return false;">🔐 Admin</a>
 
 <script>
-const NAMES=["Aarush","Advay","Atharv","Ishaan","Avir","Shrinivasprasad","Vedant","Ritvik","Vihaan","Tavish"];
 let timer=null;
 
 function show(id){
@@ -145,10 +152,40 @@ async function reveal(){
   }
 }
 
-async function resetGame(){
+function unlockAdmin(){
   const p=document.getElementById("password").value;
   const msg=document.getElementById("adminMsg");
   if(!p){msg.textContent="Enter the admin password.";return;}
+  if(p!=="lilprince"){msg.textContent="Incorrect password.";document.getElementById("adminControls").classList.add("hidden");return;}
+  document.getElementById("adminControls").classList.remove("hidden");
+  msg.textContent="Admin unlocked.";
+}
+
+async function saveSpecial(){
+  const p=document.getElementById("password").value;
+  const name=document.getElementById("specialName").value.trim();
+  const position=Number(document.getElementById("specialPosition").value);
+  const msg=document.getElementById("adminMsg");
+  if(p!=="lilprince"){msg.textContent="Incorrect password.";return;}
+  if(!name){msg.textContent="Enter the special name.";return;}
+  if(!Number.isInteger(position)||position<1||position>200){msg.textContent="Position must be from 1 to 200.";return;}
+  try{
+    const response=await fetch("/.netlify/functions/configure",{
+      method:"POST",
+      headers:{"Content-Type":"application/json"},
+      body:JSON.stringify({password:p,name,position}),
+      credentials:"include"
+    });
+    const data=await response.json();
+    if(!response.ok) throw new Error(data.error||"Could not save configuration");
+    msg.textContent=`Saved: ${name} will be revealed at position ${position}. A new round has started.`;
+  }catch(e){msg.textContent=e.message;}
+}
+
+async function resetGame(){
+  const p=document.getElementById("password").value;
+  const msg=document.getElementById("adminMsg");
+  if(p!=="lilprince"){msg.textContent="Incorrect password.";return;}
   try{
     const response=await fetch("/.netlify/functions/reset",{
       method:"POST",
@@ -157,12 +194,9 @@ async function resetGame(){
       credentials:"include"
     });
     const data=await response.json();
-    if(!response.ok) throw new Error(data.error || "Reset failed");
-    msg.textContent="Game reset successfully. A new round has started.";
-    document.getElementById("password").value="";
-  }catch(e){
-    msg.textContent=e.message;
-  }
+    if(!response.ok) throw new Error(data.error||"Reset failed");
+    msg.textContent=`Game reset successfully. The current name and position are kept. A new round has started.`;
+  }catch(e){msg.textContent=e.message;}
 }
 </script>
 </body>
