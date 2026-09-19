@@ -1,18 +1,26 @@
-LITTLE PRINCE NAME REVEAL — SERVER TRIAL
+LITTLE PRINCE NAME REVEAL — SERVER TRIAL (FIXED)
 
-NEW BEHAVIOR
-- There are 10 participant slots per round.
-- Slot 6 ALWAYS receives Shrinivasprasad.
-- Slots 1-5 and 7-10 receive the other 9 names in a randomized order.
-- Names are never shown in the reveal animation.
-- The assignment is server-side, so different phones receive different participant slots.
-- The same browser/device keeps its assigned name using a secure cookie.
-- Admin Reset starts a completely new round and randomizes the nine non-fixed names again.
-- No Replace Name List option is included.
+This version fixes the previous "Please try again" problem.
 
-ADMIN
-- Trial password: trial123
-- For a stronger password, set Netlify environment variable TRIAL_ADMIN_PASSWORD.
+Important deployment structure:
+index.html
+package.json
+netlify.toml
+netlify/functions/reveal.js
+netlify/functions/reset.js
 
-IMPORTANT DEPLOYMENT NOTE
-This version uses a Netlify Function and Netlify Blobs. It must be deployed as a Netlify project with functions enabled; the functions directory is netlify/functions.
+Game logic:
+- 10 participants per round.
+- Participants 1–5 and 7–10 receive unique randomly shuffled names from the 9 ordinary names.
+- Participant 6 always receives Shrinivasprasad.
+- No names are shown during the reveal animation.
+- The participant's browser receives a persistent anonymous cookie, so returning to the same browser gets the same assignment during that round.
+- Admin reset starts a new round.
+
+IMPORTANT:
+Deploy from the GitHub repository containing the files above. Do not upload index.html alone.
+The frontend calls the Netlify Functions directly at:
+  /.netlify/functions/reveal
+  /.netlify/functions/reset
+
+Admin password: trial123

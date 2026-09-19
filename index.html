@@ -109,7 +109,7 @@ async function reveal(){
   },180);
 
   try{
-    const response=await fetch("/api/reveal",{method:"POST",credentials:"include"});
+    const response=await fetch("/.netlify/functions/reveal",{method:"POST",credentials:"include"});
     const data=await response.json();
     if(!response.ok) throw new Error(data.error || "Unable to reveal name");
     clearInterval(timer);
@@ -130,7 +130,7 @@ async function resetGame(){
   const msg=document.getElementById("adminMsg");
   if(!p){msg.textContent="Enter the admin password.";return;}
   try{
-    const response=await fetch("/api/reset",{
+    const response=await fetch("/.netlify/functions/reset",{
       method:"POST",
       headers:{"Content-Type":"application/json"},
       body:JSON.stringify({password:p}),
