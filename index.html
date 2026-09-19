@@ -126,30 +126,32 @@ input{width:100%;padding:14px;border:1px solid #d7c0a8;border-radius:14px;font-s
 <script>
 let timer=null;
 
+function setGameWaiting(){
+  document.getElementById("welcomeStatus").textContent="✨ Game starts soon";
+  document.getElementById("welcomePrompt").textContent="🎁 The special name has not been selected yet.";
+  document.getElementById("welcomeAction").textContent="Please check back shortly.";
+  document.getElementById("enterBtn").classList.add("hidden");
+}
+
 async function checkGameStatus(){
   const status=document.getElementById("welcomeStatus");
   const prompt=document.getElementById("welcomePrompt");
   const action=document.getElementById("welcomeAction");
   const btn=document.getElementById("enterBtn");
+  // Always begin in the safe/waiting state. Only an explicit configured=true
+  // response from the server can activate the game.
+  setGameWaiting();
   try{
-    const response=await fetch("/.netlify/functions/reveal",{method:"GET",cache:"no-store"});
+    const response=await fetch("/.netlify/functions/reveal",{method:"GET",cache:"no-store",headers:{"Cache-Control":"no-cache"}});
     const data=await response.json();
-    if(data.configured){
+    if(response.ok && data.configured===true){
       status.textContent="✨ A beautiful name is waiting to be revealed soon.";
       prompt.textContent="🎁 Could you be the lucky person chosen today?";
       action.textContent="🍀 Let's find out!";
       btn.classList.remove("hidden");
-    }else{
-      status.textContent="✨ Game starts soon";
-      prompt.textContent="🎁 The special name has not been selected yet.";
-      action.textContent="Please check back shortly.";
-      btn.classList.add("hidden");
     }
   }catch(e){
-    status.textContent="✨ Game starts soon";
-    prompt.textContent="🎁 Please check back shortly.";
-    action.textContent="";
-    btn.classList.add("hidden");
+    // Keep the waiting state on any network/error condition.
   }
 }
 
@@ -168,6 +170,11 @@ function showToast(text){
 }
 
 async function enterGame(){
+  try{
+    const r=await fetch("/.netlify/functions/reveal",{method:"GET",cache:"no-store"});
+    const d=await r.json();
+    if(!r.ok || d.configured!==true){ setGameWaiting(); show("welcome"); return; }
+  }catch(e){ setGameWaiting(); show("welcome"); return; }
   show("game");
   document.getElementById("revealBtn").classList.remove("hidden");
   document.getElementById("result").classList.add("hidden");
