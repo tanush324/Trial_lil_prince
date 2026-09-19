@@ -1,0 +1,149 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<meta name="theme-color" content="#fff8ef">
+<title>Little Prince — Name Reveal</title>
+<style>
+*{box-sizing:border-box}
+body{
+  margin:0; min-height:100vh; font-family:Georgia,"Times New Roman",serif;
+  background:radial-gradient(circle at top,#fffdf8 0,#fff5e8 45%,#f8e5cf 100%);
+  color:#4d3425; overflow:hidden;
+}
+.screen{min-height:100vh;display:flex;align-items:center;justify-content:center;padding:24px;text-align:center}
+.card{width:min(92vw,520px);padding:34px 24px;border-radius:30px;background:rgba(255,255,255,.72);
+ box-shadow:0 14px 50px rgba(103,65,31,.14);backdrop-filter:blur(8px)}
+.crown{font-size:52px;animation:float 2.4s ease-in-out infinite}
+h1{font-size:30px;line-height:1.2;margin:12px 0;color:#6b452b}
+.subtitle{font-size:20px;line-height:1.5;margin:18px 0}
+.small{font:14px/1.5 Arial,sans-serif;color:#866b58}
+button{border:0;border-radius:999px;padding:16px 28px;font-size:18px;font-weight:700;
+ background:#9b6638;color:white;box-shadow:0 8px 20px rgba(110,70,35,.22);cursor:pointer}
+button:active{transform:scale(.97)}
+.hidden{display:none!important}
+.sparkles{font-size:24px;letter-spacing:12px;margin:20px 0;animation:pulse 1.5s infinite}
+.name{font-size:48px;line-height:1.1;color:#8a5229;margin:24px 0;font-weight:700;word-break:break-word}
+.slot{font-size:34px;min-height:50px;color:#9a806c;margin:20px 0;font-weight:700}
+.admin-link{position:fixed;right:12px;bottom:10px;font:12px Arial;color:#9a806c;text-decoration:none}
+input{width:100%;padding:14px;border:1px solid #d7c0a8;border-radius:14px;font-size:16px;margin:12px 0}
+.msg{margin-top:15px;font:14px Arial;color:#765b49}
+@keyframes float{50%{transform:translateY(-8px)}}
+@keyframes pulse{50%{opacity:.35;transform:scale(1.08)}}
+@media(max-width:380px){h1{font-size:26px}.name{font-size:40px}}
+</style>
+</head>
+<body>
+<section id="welcome" class="screen">
+  <div class="card">
+    <div class="crown">👑</div>
+    <h1>Welcome to our little prince's<br>Name Revealing Ceremony</h1>
+    <div class="sparkles">✦ ✧ ✦</div>
+    <div class="subtitle">✨ A beautiful little name is waiting to be revealed.</div>
+    <div class="subtitle">🎁 Could you be the lucky person chosen today?</div>
+    <div class="subtitle">🍀 Let's find out!</div>
+    <button onclick="enterGame()">Click to Enter</button>
+  </div>
+</section>
+
+<section id="game" class="screen hidden">
+  <div class="card">
+    <div class="crown">👶</div>
+    <h1>Who is the lucky one?</h1>
+    <p class="small">One special name is being chosen for you...</p>
+    <div id="slot" class="slot">✨ Ready?</div>
+    <div id="result" class="hidden">
+      <div class="sparkles">✦ ✧ ✦</div>
+      <div class="small">Your lucky name is</div>
+      <div id="name" class="name"></div>
+      <div class="small">Your first revealed name stays with you when you return. 💛</div>
+    </div>
+    <button id="revealBtn" onclick="reveal()">✨ Reveal My Name</button>
+  </div>
+</section>
+
+<section id="admin" class="screen hidden">
+  <div class="card">
+    <div class="crown">🔐</div>
+    <h1>Admin</h1>
+    <p class="small">Trial reset controls</p>
+    <input id="password" type="password" placeholder="Admin password">
+    <button onclick="resetGame()">Reset Game</button>
+    <div id="adminMsg" class="msg"></div>
+    <br><br><a href="#" class="small" onclick="showWelcome();return false;">← Back</a>
+  </div>
+</section>
+
+<a class="admin-link" href="#" onclick="showAdmin();return false;">Admin</a>
+
+<script>
+const NAMES=["Aarush","Advay","Atharv","Ishaan","Avir","Shrinivasprasad","Vedant","Ritvik","Vihaan","Tavish"];
+let timer=null;
+
+function show(id){
+  ["welcome","game","admin"].forEach(x=>document.getElementById(x).classList.toggle("hidden",x!==id));
+}
+function showWelcome(){show("welcome")}
+function showAdmin(){show("admin")}
+
+async function enterGame(){
+  show("game");
+  document.getElementById("revealBtn").classList.remove("hidden");
+  document.getElementById("result").classList.add("hidden");
+  document.getElementById("slot").classList.remove("hidden");
+  document.getElementById("slot").textContent="✨ Ready?";
+}
+
+async function reveal(){
+  const btn=document.getElementById("revealBtn");
+  if(btn.disabled) return;
+  btn.disabled=true;
+  const slot=document.getElementById("slot");
+  let rounds=0;
+  const suspense=["✨","✨ ✨","💫","💫 💫","👑","✨ 💫 ✨"];
+  timer=setInterval(()=>{
+    slot.textContent=suspense[rounds % suspense.length];
+    rounds++;
+    if(rounds>=12) clearInterval(timer);
+  },180);
+
+  try{
+    const response=await fetch("/api/reveal",{method:"POST",credentials:"include"});
+    const data=await response.json();
+    if(!response.ok) throw new Error(data.error || "Unable to reveal name");
+    clearInterval(timer);
+    slot.classList.add("hidden");
+    document.getElementById("name").textContent=data.name;
+    document.getElementById("result").classList.remove("hidden");
+    btn.classList.add("hidden");
+  }catch(e){
+    clearInterval(timer);
+    slot.textContent="Please try again.";
+    btn.disabled=false;
+    console.error(e);
+  }
+}
+
+async function resetGame(){
+  const p=document.getElementById("password").value;
+  const msg=document.getElementById("adminMsg");
+  if(!p){msg.textContent="Enter the admin password.";return;}
+  try{
+    const response=await fetch("/api/reset",{
+      method:"POST",
+      headers:{"Content-Type":"application/json"},
+      body:JSON.stringify({password:p}),
+      credentials:"include"
+    });
+    const data=await response.json();
+    if(!response.ok) throw new Error(data.error || "Reset failed");
+    msg.textContent="Game reset successfully. A new round has started.";
+    document.getElementById("password").value="";
+  }catch(e){
+    msg.textContent=e.message;
+  }
+}
+</script>
+</body>
+</html>
