@@ -38,5 +38,5 @@ export default async (req)=>{
   await store.setJSON(CONFIG_KEY,config);
   const state={round:Date.now(),nextParticipant:1,specialName:name,specialPosition:position,assignments:makeAssignments(name,position),participants:{}};
   await store.setJSON(STATE_KEY,state);
-  return json({ok:true,config,state:{round:state.round}});
+  return json({ok:true,name,position,config,state:{round:state.round}});
 };
