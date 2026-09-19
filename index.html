@@ -10,7 +10,7 @@
 body{
   margin:0; min-height:100vh; font-family:Georgia,"Times New Roman",serif;
   background:radial-gradient(circle at top,#fffdf8 0,#fff5e8 45%,#f8e5cf 100%);
-  color:#4d3425; overflow:hidden;
+  color:#4d3425; overflow-x:hidden; overflow-y:auto;
 }
 .screen{min-height:100vh;display:flex;align-items:center;justify-content:center;padding:24px;text-align:center}
 .card{width:min(92vw,520px);padding:34px 24px;border-radius:30px;background:rgba(255,255,255,.72);
@@ -36,22 +36,31 @@ input{width:100%;padding:14px;border:1px solid #d7c0a8;border-radius:14px;font-s
 .admin-link {
   position: fixed !important;
   left: 18px !important;
-  right: auto !important;
   bottom: 18px !important;
-  top: auto !important;
-  z-index: 999999 !important;
+  z-index: 999 !important;
   display: block !important;
   padding: 10px 16px !important;
-  background: rgba(255,255,255,0.96) !important;
+  background: rgba(255,255,255,0.97) !important;
   border: 1px solid #c9b09a !important;
   border-radius: 20px !important;
   color: #76543e !important;
   font: 600 14px Arial, sans-serif !important;
   text-decoration: none !important;
   box-shadow: 0 3px 12px rgba(0,0,0,0.12) !important;
-  visibility: visible !important;
-  pointer-events: auto !important;
 }
+.admin-link.is-hidden { display:none !important; }
+.admin-screen { align-items:flex-start; padding-top:24px; padding-bottom:140px; }
+.admin-card { width:min(92vw,520px); }
+.admin-title { margin-bottom:6px; }
+.admin-controls { margin-top:20px; }
+.admin-section { margin:16px 0 0; padding:18px; border:1px solid #ead9c7; border-radius:20px; background:rgba(255,250,244,.72); }
+.admin-section .small { margin:0 0 10px; }
+.admin-actions { display:flex; flex-direction:column; gap:12px; margin-top:16px; }
+.admin-actions button { width:100%; }
+.admin-secondary { background:#7d6656; }
+.admin-back { display:inline-block; margin-top:22px; padding:8px 12px; }
+.admin-msg { min-height:22px; margin-top:14px; }
+.toast { position:fixed; top:16px; left:50%; transform:translateX(-50%); z-index:1000; max-width:calc(100vw - 32px); padding:12px 18px; border-radius:16px; background:rgba(77,52,37,.94); color:#fff; font:600 14px Arial,sans-serif; box-shadow:0 6px 20px rgba(0,0,0,.18); text-align:center; }
 </style>
 </head>
 <body>
@@ -60,10 +69,10 @@ input{width:100%;padding:14px;border:1px solid #d7c0a8;border-radius:14px;font-s
     <div class="crown">👑</div>
     <h1>Welcome to our prince's<br>Name Revealing Ceremony</h1>
     <div class="sparkles">✦ ✧ ✦</div>
-    <div class="subtitle">✨ A beautiful name is waiting to be revealed soon.</div>
-    <div class="subtitle">🎁 Could you be the lucky person chosen today?</div>
-    <div class="subtitle">🍀 Let's find out!</div>
-    <button onclick="enterGame()">Click to Enter</button>
+    <div id="welcomeStatus" class="subtitle">✨ A beautiful name is waiting to be revealed soon.</div>
+    <div id="welcomePrompt" class="subtitle">🎁 Could you be the lucky person chosen today?</div>
+    <div id="welcomeAction" class="subtitle">🍀 Let's find out!</div>
+    <button id="enterBtn" onclick="enterGame()">Click to Enter</button>
   </div>
 </section>
 
@@ -83,36 +92,80 @@ input{width:100%;padding:14px;border:1px solid #d7c0a8;border-radius:14px;font-s
   </div>
 </section>
 
-<section id="admin" class="screen hidden">
-  <div class="card">
+<section id="admin" class="screen hidden admin-screen">
+  <div class="card admin-card">
     <div class="crown">🔐</div>
-    <h1>Admin</h1>
-    <p class="small">Admin controls</p>
-    <input id="password" type="password" placeholder="Admin password">
-    <button onclick="unlockAdmin()">Unlock Admin</button>
-    <div id="adminControls" class="hidden">
-      <p class="small">Choose the special name and the participant position for this round. The game has 200 participant positions. If your chosen name is in the 200-name pool, it is moved to the selected position so it cannot appear elsewhere in the same round.</p>
-      <input id="specialName" type="text" placeholder="Special name (e.g. Shrinivasprasad)" maxlength="50">
-      <input id="specialPosition" type="number" min="1" max="200" placeholder="Position (1–200)">
-      <button onclick="saveSpecial()">Save Name &amp; Position</button>
-      <br><br>
-      <button onclick="resetGame()">Reset Game</button>
+    <h1 class="admin-title">Admin</h1>
+    <p class="small">Manage the special name and start a new round.</p>
+
+    <div class="admin-section">
+      <input id="password" type="password" placeholder="Admin password" autocomplete="off">
+      <button onclick="unlockAdmin()">Unlock Admin</button>
+      <div id="adminMsg" class="msg admin-msg"></div>
     </div>
-    <div id="adminMsg" class="msg"></div>
-    <br><br><a href="#" class="small" onclick="showWelcome();return false;">← Back</a>
+
+    <div id="adminControls" class="hidden admin-controls">
+      <div class="admin-section">
+        <p class="small">There are <strong>200 participant positions</strong>. Enter the name and the position where it must appear. If the name is already in the 200-name pool, it is moved to that position and cannot appear anywhere else in the round.</p>
+        <input id="specialName" type="text" placeholder="Special name" maxlength="50" autocomplete="off">
+        <input id="specialPosition" type="number" min="1" max="200" placeholder="Position (1–200)" inputmode="numeric">
+        <div class="admin-actions">
+          <button onclick="saveSpecial()">Save Name &amp; Position</button>
+          <button class="admin-secondary" onclick="resetGame()">Reset Game</button>
+        </div>
+      </div>
+    </div>
+
+    <a href="#" class="small admin-back" onclick="showWelcome();return false;">← Back to Home</a>
   </div>
 </section>
 
-<a class="admin-link" href="#" onclick="showAdmin();return false;">🔐 Admin</a>
+<a id="adminLink" class="admin-link" href="#" onclick="showAdmin();return false;">🔐 Admin</a>
+<div id="toast" class="toast hidden"></div>
 
 <script>
 let timer=null;
 
+async function checkGameStatus(){
+  const status=document.getElementById("welcomeStatus");
+  const prompt=document.getElementById("welcomePrompt");
+  const action=document.getElementById("welcomeAction");
+  const btn=document.getElementById("enterBtn");
+  try{
+    const response=await fetch("/.netlify/functions/reveal",{method:"GET",cache:"no-store"});
+    const data=await response.json();
+    if(data.configured){
+      status.textContent="✨ A beautiful name is waiting to be revealed soon.";
+      prompt.textContent="🎁 Could you be the lucky person chosen today?";
+      action.textContent="🍀 Let's find out!";
+      btn.classList.remove("hidden");
+    }else{
+      status.textContent="✨ Game starts soon";
+      prompt.textContent="🎁 The special name has not been selected yet.";
+      action.textContent="Please check back shortly.";
+      btn.classList.add("hidden");
+    }
+  }catch(e){
+    status.textContent="✨ Game starts soon";
+    prompt.textContent="🎁 Please check back shortly.";
+    action.textContent="";
+    btn.classList.add("hidden");
+  }
+}
+
 function show(id){
   ["welcome","game","admin"].forEach(x=>document.getElementById(x).classList.toggle("hidden",x!==id));
+  document.getElementById("adminLink").classList.toggle("is-hidden", id === "admin");
+  window.scrollTo({top:0,behavior:"instant"});
 }
-function showWelcome(){show("welcome")}
+function showWelcome(){show("welcome");checkGameStatus()}
 function showAdmin(){show("admin")}
+function showToast(text){
+  const t=document.getElementById("toast");
+  t.textContent=text; t.classList.remove("hidden");
+  clearTimeout(window.toastTimer);
+  window.toastTimer=setTimeout(()=>t.classList.add("hidden"),2600);
+}
 
 async function enterGame(){
   show("game");
@@ -178,7 +231,12 @@ async function saveSpecial(){
     });
     const data=await response.json();
     if(!response.ok) throw new Error(data.error||"Could not save configuration");
-    msg.textContent=`Saved: ${name} will be revealed at position ${position}. A new round has started.`;
+    document.getElementById("specialName").value="";
+    document.getElementById("specialPosition").value="";
+    document.getElementById("adminControls").classList.add("hidden");
+    msg.textContent="";
+    showWelcome();
+    showToast(`New round started: ${data.name} is at position ${data.position}.`);
   }catch(e){msg.textContent=e.message;}
 }
 
@@ -195,9 +253,12 @@ async function resetGame(){
     });
     const data=await response.json();
     if(!response.ok) throw new Error(data.error||"Reset failed");
-    msg.textContent=`Game reset successfully. The current name and position are kept. A new round has started.`;
+    msg.textContent="";
+    showWelcome();
+    showToast("Game reset successfully. A new round has started.");
   }catch(e){msg.textContent=e.message;}
 }
+checkGameStatus();
 </script>
 </body>
 </html>
