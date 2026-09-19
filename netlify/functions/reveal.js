@@ -40,17 +40,17 @@ function makeAssignments() {
   return assignments;
 }
 async function readState(store) {
-  const got = await store.getWithMetadata(STATE_KEY, {type:"json"});
+  const got = await store.getWithMetadata(STATE_KEY, {type:"json", consistency:"strong"});
   if (!got) return {round:1,nextParticipant:1,assignments:makeAssignments(),participants:{}};
   return got;
 }
 async function ensureState(store) {
-  const got = await store.getWithMetadata(STATE_KEY, {type:"json"});
+  const got = await store.getWithMetadata(STATE_KEY, {type:"json", consistency:"strong"});
   if (got) return got;
   const state={round:1,nextParticipant:1,assignments:makeAssignments(),participants:{}};
-  const result=await store.set(STATE_KEY,state,{onlyIfNew:true});
+  const result=await store.setJSON(STATE_KEY,state,{onlyIfNew:true});
   if (result.modified) return {data:state,etag:result.etag};
-  return await store.getWithMetadata(STATE_KEY,{type:"json"});
+  return await store.getWithMetadata(STATE_KEY,{type:"json", consistency:"strong"});
 }
 
 export default async (req) => {
@@ -78,7 +78,7 @@ export default async (req) => {
         [participantId]:{round:state.round,slot,name}
       }
     };
-    const result=await store.set(STATE_KEY,updated,{onlyIfMatch:current.etag});
+    const result=await store.setJSON(STATE_KEY,updated,{onlyIfMatch:current.etag});
     if(result.modified){
       return json(
         {name,participant:slot},

@@ -19,14 +19,14 @@ export default async (req)=>{
   if(body.password!==ADMIN_PASSWORD) return json({error:"Incorrect password."},401);
   const store=getStore(STORE_NAME);
   for(let attempt=0;attempt<8;attempt++){
-    const current=await store.getWithMetadata(STATE_KEY,{type:"json"});
+    const current=await store.getWithMetadata(STATE_KEY,{type:"json", consistency:"strong"});
     const oldRound=current?.data?.round || 0;
     const state={round:oldRound+1,nextParticipant:1,assignments:makeAssignments(),participants:{}};
     if(!current){
-      const r=await store.set(STATE_KEY,state,{onlyIfNew:true});
+      const r=await store.setJSON(STATE_KEY,state,{onlyIfNew:true});
       if(r.modified) return json({ok:true,round:state.round});
     }else{
-      const r=await store.set(STATE_KEY,state,{onlyIfMatch:current.etag});
+      const r=await store.setJSON(STATE_KEY,state,{onlyIfMatch:current.etag});
       if(r.modified) return json({ok:true,round:state.round});
     }
   }
