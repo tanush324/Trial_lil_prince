@@ -34,11 +34,12 @@ export default async (req)=>{
   if(body.password!==ADMIN_PASSWORD) return json({error:"Incorrect password."},401);
   const store=getStore(STORE_NAME);
   await ensureCurrentDeployment(store);
-  const cfg=(await store.getWithMetadata(CONFIG_KEY,{type:"json",consistency:"strong"}))?.data;
-  if(!cfg?.specialName) return json({ok:true,configured:false,message:"Game is waiting for Admin to select a name."});
-  const name=canonicalName(cfg.specialName);
-  const position=Number(cfg.specialPosition);
-  const state={deploymentId:DEPLOYMENT_ID,round:Date.now(),nextParticipant:1,specialName:name,specialPosition:position,assignments:makeAssignments(name,position),participants:{}};
+  // Reset means a complete reset: clear the configured name as well as all
+  // participant assignments. The public page will therefore show
+  // "Game starts soon" until Admin configures a new name and position.
+  const config={deploymentId:DEPLOYMENT_ID,specialName:"",specialPosition:null,configured:false};
+  const state={deploymentId:DEPLOYMENT_ID,round:null,nextParticipant:1,specialName:"",specialPosition:null,assignments:{},participants:{}};
+  await store.setJSON(CONFIG_KEY,config);
   await store.setJSON(STATE_KEY,state);
-  return json({ok:true,round:state.round,specialName:name,specialPosition:position});
+  return json({ok:true,configured:false,message:"Game reset. Waiting for Admin to select a name."});
 };
