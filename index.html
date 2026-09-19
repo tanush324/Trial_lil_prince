@@ -235,8 +235,8 @@ async function saveSpecial(){
     document.getElementById("specialPosition").value="";
     document.getElementById("adminControls").classList.add("hidden");
     msg.textContent="";
-    showWelcome();
-    showToast(`New round started: ${data.name} is at position ${data.position}.`);
+    // Force a clean landing-page navigation after configuration.
+    window.location.href = "/";
   }catch(e){msg.textContent=e.message;}
 }
 
@@ -254,8 +254,8 @@ async function resetGame(){
     const data=await response.json();
     if(!response.ok) throw new Error(data.error||"Reset failed");
     msg.textContent="";
-    showWelcome();
-    showToast("Game reset successfully. A new round has started.");
+    // Force a clean landing-page navigation after reset.
+    window.location.href = "/";
   }catch(e){msg.textContent=e.message;}
 }
 checkGameStatus();
