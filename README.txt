@@ -10,3 +10,11 @@ Features:
 - Saving the admin name + position starts a completely new round immediately, exactly like Reset Game: participant counter returns to #1 and all prior participant assignments are cleared.
 - Reset Game also starts a completely new round while retaining the current special name and position.
 - Admin is password protected with password: lilprince. Server-side endpoints also require the password.
+
+
+Deployment reset behavior
+--------------------------
+Every Netlify deployment generates a unique deployment ID from Netlify's DEPLOY_ID build variable.
+The server compares that ID with the stored game state. When a new deployment is detected, the old
+configuration and all 200 participant assignments are cleared. The public page therefore stays on
+"Game starts soon" until Admin enters a new chosen name and position.
