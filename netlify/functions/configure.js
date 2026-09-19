@@ -1,8 +1,16 @@
 import { getStore } from "@netlify/blobs";
-
-const STORE_NAME="little-prince-name-reveal";
-const STATE_KEY="game";
-const CONFIG_KEY="config";
+const STORE_NAME = "little-prince-name-reveal";
+const STATE_KEY = "game";
+const CONFIG_KEY = "config";
+const DEPLOYMENT_KEY = "deployment";
+const DEPLOYMENT_ID = process.env.DEPLOY_ID || "local";
+async function ensureCurrentDeployment(store){
+  const current=await store.getWithMetadata(DEPLOYMENT_KEY,{type:"json",consistency:"strong"});
+  if(current?.data?.deploymentId===DEPLOYMENT_ID)return;
+  await store.setJSON(DEPLOYMENT_KEY,{deploymentId:DEPLOYMENT_ID});
+  await store.setJSON(CONFIG_KEY,{deploymentId:DEPLOYMENT_ID,specialName:"",specialPosition:null,configured:false});
+  await store.setJSON(STATE_KEY,{deploymentId:DEPLOYMENT_ID,round:null,nextParticipant:1,specialName:"",specialPosition:null,assignments:{},participants:{}});
+}
 const ADMIN_PASSWORD="lilprince";
 const BASE_NAMES=["Aarush", "Advay", "Atharv", "Ishaan", "Avir", "Vedant", "Ritvik", "Vihaan", "Tavish", "Aatreya", "Agniv", "Avyukt", "Anvay", "Ekansh", "Ekavir", "Havish", "Hriday", "Ishayu", "Kairav", "Kavish", "Medhansh", "Mihir", "Nihit", "Ojas", "Pravar", "Rishit", "Ritansh", "Srijan", "Sudarsh", "Udbhav", "Vaidik", "Vedarth", "Viraj", "Aarav", "Aditya", "Advait", "Agastya", "Ahaan", "Aayansh", "Abhay", "Abhinav", "Abhimanyu", "Achintya", "Adarsh", "Adit", "Aditesh", "Advaith", "Ahan", "Akshay", "Amay", "Amogh", "Anant", "Anay", "Aniket", "Anirudh", "Anish", "Ansh", "Anshuman", "Arhaan", "Arin", "Arjun", "Arnav", "Arpit", "Aryan", "Ashwin", "Atharva", "Atreya", "Avyaan", "Ayush", "Ayushman", "Bharat", "Bhargav", "Bhuvan", "Bodhi", "Brijesh", "Chaitanya", "Chirag", "Daksh", "Dakshesh", "Darsh", "Dhairya", "Dhruv", "Dhruva", "Divij", "Divit", "Divyansh", "Eeshan", "Ehan", "Eklavya", "Gaurav", "Girish", "Gokul", "Harsh", "Harshil", "Harshit", "Hemant", "Himanshu", "Hiran", "Hrishikesh", "Ivaan", "Ivaansh", "Ishank", "Ishwar", "Jai", "Jatin", "Jayant", "Jeevan", "Kabir", "Kartik", "Kartikeya", "Kavin", "Kiaan", "Kiran", "Kriyansh", "Krish", "Krishiv", "Kunal", "Laksh", "Lakshay", "Lakshit", "Lohit", "Madhav", "Manan", "Manav", "Manish", "Mayank", "Moksh", "Naksh", "Nakul", "Naman", "Nandan", "Naveen", "Neel", "Neerav", "Nihal", "Nirvaan", "Nishant", "Nitin", "Om", "Omkar", "Parth", "Pranav", "Pranay", "Pratham", "Pratyush", "Raghav", "Raghavendra", "Raj", "Rajat", "Rajveer", "Ranveer", "Reyansh", "Riaan", "Rishabh", "Rishi", "Rohan", "Rohit", "Rudra", "Rudransh", "Samar", "Samarth", "Sarthak", "Shaurya", "Shiv", "Shivansh", "Shlok", "Shrey", "Shreyansh", "Siddharth", "Soham", "Somesh", "Sparsh", "Sriansh", "Sthavir", "Tanay", "Tanish", "Tanishq", "Tarun", "Tejas", "Tejasvi", "Trishan", "Ujjwal", "Utkarsh", "Vansh", "Varun", "Vatsal", "Veer", "Vihan", "Vikram", "Vivan", "Vivaan", "Yash", "Yashas", "Yuvan", "Yuvaan", "Zoravar", "Amod", "Anvith", "Devarsh", "Varen"];
 
@@ -34,9 +42,10 @@ export default async (req)=>{
   if(!Number.isInteger(position)||position<1||position>200) return json({error:"Position must be a whole number from 1 to 200."},400);
   if(name.length>50) return json({error:"Name is too long."},400);
   const store=getStore(STORE_NAME);
-  const config={specialName:name,specialPosition:position};
+  await ensureCurrentDeployment(store);
+  const config={deploymentId:DEPLOYMENT_ID,specialName:name,specialPosition:position,configured:true};
   await store.setJSON(CONFIG_KEY,config);
-  const state={round:Date.now(),nextParticipant:1,specialName:name,specialPosition:position,assignments:makeAssignments(name,position),participants:{}};
+  const state={deploymentId:DEPLOYMENT_ID,round:Date.now(),nextParticipant:1,specialName:name,specialPosition:position,assignments:makeAssignments(name,position),participants:{}};
   await store.setJSON(STATE_KEY,state);
   return json({ok:true,name,position,config,state:{round:state.round}});
 };
