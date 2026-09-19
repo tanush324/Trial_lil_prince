@@ -1,4 +1,3 @@
 [build]
-  command = "node scripts/generate-deploy-version.mjs"
   functions = "netlify/functions"
   publish = "."
